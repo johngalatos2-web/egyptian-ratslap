@@ -22,30 +22,45 @@ let imagesReady = false;
 function loadImages(){
   console.log("Loading card images from cards/ folder");
   let loaded = 0;
+  let failed = 0;
   let total = ranks.length * suits.length + 1;
   
   function checkReady(){
     loaded++;
     if(loaded === total){
-      console.log("All images loaded!");
-      imagesReady = true;
+      console.log(`All images processed! Loaded: ${total - failed}, Failed: ${failed}`);
+      imagesReady = failed === 0;
     }
   }
   
   ranks.forEach(r=>{
     suits.forEach(s=>{
       let img = new Image();
-      img.onload = checkReady;
-      img.onerror = () => { console.error(`Failed to load ${r}${s}`); checkReady(); };
+      img.onload = () => {
+        console.log(`✓ Loaded ${r}${s}`);
+        checkReady();
+      };
+      img.onerror = () => { 
+        failed++;
+        console.error(`✗ Failed to load ${r}${s} from cards/${suitAbbrev[s]}${rankNums[r]}.png`); 
+        checkReady(); 
+      };
       img.src = `cards/${suitAbbrev[s]}${rankNums[r]}.png`;
       cardImages[r+s] = img;
     });
   });
   back = new Image();
-  back.onload = checkReady;
-  back.onerror = () => { console.error("Failed to load card back"); checkReady(); };
+  back.onload = () => {
+    console.log("✓ Loaded card back");
+    checkReady();
+  };
+  back.onerror = () => { 
+    failed++;
+    console.error("✗ Failed to load card back from cards/Card-Back-01.png"); 
+    checkReady(); 
+  };
   back.src = "cards/Card-Back-01.png";
-  console.log("Card images loading initiated");
+  console.log("Card images loading initiated - expecting " + total + " images");
 }
 
 function shuffle(arr){
@@ -288,6 +303,10 @@ function draw(){
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
     ctx.fillText("Loading card images...", 350, 350);
+    
+    let loadedCount = Object.keys(cardImages).filter(k => cardImages[k].complete).length;
+    ctx.fillText(`Progress: ${loadedCount}/53`, 350, 380);
+    
     return;
   }
   
