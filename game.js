@@ -17,12 +17,17 @@ function loadImages(){
   ranks.forEach(r=>{
     suits.forEach(s=>{
       let img = new Image();
-      img.src = `../cards/${suitAbbrev[s]}${rankNums[r]}.png`;
+      img.onload = () => console.log(`Loaded ${r}${s}`);
+      img.onerror = () => console.error(`Failed to load ${r}${s} from cards/${suitAbbrev[s]}${rankNums[r]}.png`);
+      img.src = `cards/${suitAbbrev[s]}${rankNums[r]}.png`;
       cardImages[r+s] = img;
     });
   });
   back = new Image();
-  back.src = "../cards/Card-Back-01.png";
+  back.onload = () => console.log("Loaded card back");
+  back.onerror = () => console.error("Failed to load card back from cards/Card-Back-01.png");
+  back.src = "cards/Card-Back-01.png";
+  console.log("Image loading started");
 }
 
 function shuffle(arr){
@@ -214,7 +219,16 @@ function drawPile(){
     ctx.save();
     ctx.translate(500 + offset.offsetX, 300 - i*2 + offset.offsetY);
     ctx.rotate(offset.rot);
-    ctx.drawImage(cardImages[card], -CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
+    if(cardImages[card] && cardImages[card].complete){
+      ctx.drawImage(cardImages[card], -CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
+    } else {
+      // Fallback if image not loaded
+      ctx.fillStyle = "#FFF";
+      ctx.fillRect(-CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
+      ctx.fillStyle = "#000";
+      ctx.font = "14px Arial";
+      ctx.fillText(card, -15, 5);
+    }
     ctx.restore();
   });
 }
@@ -226,7 +240,15 @@ function drawAnimatedCard(){
   let sy = cardAnimation.player === 0 ? 572 : 122;
   let x = sx + (500 - sx) * progress;
   let y = sy + (300 - sy) * progress;
-  ctx.drawImage(cardImages[cardAnimation.card], x, y, CARD_W, CARD_H);
+  if(cardImages[cardAnimation.card] && cardImages[cardAnimation.card].complete){
+    ctx.drawImage(cardImages[cardAnimation.card], x, y, CARD_W, CARD_H);
+  } else {
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(x, y, CARD_W, CARD_H);
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.fillText(cardAnimation.card, x + 10, y + 50);
+  }
 }
 
 function drawBurnAnimation(){
@@ -235,7 +257,12 @@ function drawBurnAnimation(){
   let scale = 1 - progress * 0.5;
   if(scale > 0){
     ctx.globalAlpha = 1 - progress;
-    ctx.drawImage(back, 500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
+    if(back && back.complete){
+      ctx.drawImage(back, 500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
+    } else {
+      ctx.fillStyle = "#FFF";
+      ctx.fillRect(500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
+    }
     ctx.globalAlpha = 1;
   }
 }
@@ -249,7 +276,15 @@ function drawCollectionAnimation(){
     let p = Math.min(1, progress + (i * 0.1));
     let x = 500 + (endX - 500) * p;
     let y = 300 + (endY - 300) * p;
-    ctx.drawImage(cardImages[card], x, y, CARD_W, CARD_H);
+    if(cardImages[card] && cardImages[card].complete){
+      ctx.drawImage(cardImages[card], x, y, CARD_W, CARD_H);
+    } else {
+      ctx.fillStyle = "#FFF";
+      ctx.fillRect(x, y, CARD_W, CARD_H);
+      ctx.fillStyle = "#000";
+      ctx.font = "10px Arial";
+      ctx.fillText(card, x + 5, y + 40);
+    }
   });
 }
 
@@ -257,8 +292,14 @@ function draw(){
   ctx.fillStyle = "#1e7a3f";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  ctx.drawImage(back, 150, 500, CARD_W, CARD_H);
-  ctx.drawImage(back, 750, 50, CARD_W, CARD_H);
+  if(back && back.complete){
+    ctx.drawImage(back, 150, 500, CARD_W, CARD_H);
+    ctx.drawImage(back, 750, 50, CARD_W, CARD_H);
+  } else {
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(150, 500, CARD_W, CARD_H);
+    ctx.fillRect(750, 50, CARD_W, CARD_H);
+  }
   
   ctx.fillStyle = "white";
   ctx.font = "22px Arial";
