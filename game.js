@@ -1,5 +1,10 @@
+console.log("Script loading...");
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+console.log("Canvas found:", !!canvas);
+console.log("Context found:", !!ctx);
 
 const CARD_W = 100;
 const CARD_H = 145;
@@ -11,23 +16,20 @@ const rankNums = {A:"01","2":"02","3":"03","4":"04","5":"05","6":"06","7":"07","
 const suitAbbrev = {S:"s",H:"h",D:"d",C:"c"};
 
 let cardImages = {};
-let back;
+let back = null;
 
 function loadImages(){
+  console.log("Loading card images from cards/ folder");
   ranks.forEach(r=>{
     suits.forEach(s=>{
       let img = new Image();
-      img.onload = () => console.log(`Loaded ${r}${s}`);
-      img.onerror = () => console.error(`Failed to load ${r}${s} from cards/${suitAbbrev[s]}${rankNums[r]}.png`);
       img.src = `cards/${suitAbbrev[s]}${rankNums[r]}.png`;
       cardImages[r+s] = img;
     });
   });
   back = new Image();
-  back.onload = () => console.log("Loaded card back");
-  back.onerror = () => console.error("Failed to load card back from cards/Card-Back-01.png");
   back.src = "cards/Card-Back-01.png";
-  console.log("Image loading started");
+  console.log("Card images loading initiated");
 }
 
 function shuffle(arr){
@@ -219,16 +221,7 @@ function drawPile(){
     ctx.save();
     ctx.translate(500 + offset.offsetX, 300 - i*2 + offset.offsetY);
     ctx.rotate(offset.rot);
-    if(cardImages[card] && cardImages[card].complete){
-      ctx.drawImage(cardImages[card], -CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
-    } else {
-      // Fallback if image not loaded
-      ctx.fillStyle = "#FFF";
-      ctx.fillRect(-CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
-      ctx.fillStyle = "#000";
-      ctx.font = "14px Arial";
-      ctx.fillText(card, -15, 5);
-    }
+    ctx.drawImage(cardImages[card], -CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
     ctx.restore();
   });
 }
@@ -240,15 +233,7 @@ function drawAnimatedCard(){
   let sy = cardAnimation.player === 0 ? 572 : 122;
   let x = sx + (500 - sx) * progress;
   let y = sy + (300 - sy) * progress;
-  if(cardImages[cardAnimation.card] && cardImages[cardAnimation.card].complete){
-    ctx.drawImage(cardImages[cardAnimation.card], x, y, CARD_W, CARD_H);
-  } else {
-    ctx.fillStyle = "#FFF";
-    ctx.fillRect(x, y, CARD_W, CARD_H);
-    ctx.fillStyle = "#000";
-    ctx.font = "14px Arial";
-    ctx.fillText(cardAnimation.card, x + 10, y + 50);
-  }
+  ctx.drawImage(cardImages[cardAnimation.card], x, y, CARD_W, CARD_H);
 }
 
 function drawBurnAnimation(){
@@ -257,12 +242,7 @@ function drawBurnAnimation(){
   let scale = 1 - progress * 0.5;
   if(scale > 0){
     ctx.globalAlpha = 1 - progress;
-    if(back && back.complete){
-      ctx.drawImage(back, 500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
-    } else {
-      ctx.fillStyle = "#FFF";
-      ctx.fillRect(500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
-    }
+    ctx.drawImage(back, 500 - (CARD_W*scale)/2, 300 - (CARD_H*scale)/2, CARD_W*scale, CARD_H*scale);
     ctx.globalAlpha = 1;
   }
 }
@@ -276,15 +256,7 @@ function drawCollectionAnimation(){
     let p = Math.min(1, progress + (i * 0.1));
     let x = 500 + (endX - 500) * p;
     let y = 300 + (endY - 300) * p;
-    if(cardImages[card] && cardImages[card].complete){
-      ctx.drawImage(cardImages[card], x, y, CARD_W, CARD_H);
-    } else {
-      ctx.fillStyle = "#FFF";
-      ctx.fillRect(x, y, CARD_W, CARD_H);
-      ctx.fillStyle = "#000";
-      ctx.font = "10px Arial";
-      ctx.fillText(card, x + 5, y + 40);
-    }
+    ctx.drawImage(cardImages[card], x, y, CARD_W, CARD_H);
   });
 }
 
@@ -292,14 +264,8 @@ function draw(){
   ctx.fillStyle = "#1e7a3f";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  if(back && back.complete){
-    ctx.drawImage(back, 150, 500, CARD_W, CARD_H);
-    ctx.drawImage(back, 750, 50, CARD_W, CARD_H);
-  } else {
-    ctx.fillStyle = "#FFF";
-    ctx.fillRect(150, 500, CARD_W, CARD_H);
-    ctx.fillRect(750, 50, CARD_W, CARD_H);
-  }
+  ctx.drawImage(back, 150, 500, CARD_W, CARD_H);
+  ctx.drawImage(back, 750, 50, CARD_W, CARD_H);
   
   ctx.fillStyle = "white";
   ctx.font = "22px Arial";
@@ -373,8 +339,12 @@ function update(dt){
   if(p2.length === 0 && pile.length === 0) message = "PLAYER 1 WINS!";
 }
 
+let frameCount = 0;
 let last = 0;
 function loop(time){
+  frameCount++;
+  if(frameCount % 60 === 0) console.log("Frame", frameCount, "- P1:", p1.length, "P2:", p2.length);
+  
   let dt = time - last;
   last = time;
   draw();
@@ -382,5 +352,8 @@ function loop(time){
   requestAnimationFrame(loop);
 }
 
+console.log("Initializing game...");
 loadImages();
+console.log("Starting animation loop...");
 requestAnimationFrame(loop);
+console.log("Game started!");
