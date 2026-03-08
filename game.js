@@ -17,17 +17,33 @@ const suitAbbrev = {S:"s",H:"h",D:"d",C:"c"};
 
 let cardImages = {};
 let back = null;
+let imagesReady = false;
 
 function loadImages(){
   console.log("Loading card images from cards/ folder");
+  let loaded = 0;
+  let total = ranks.length * suits.length + 1;
+  
+  function checkReady(){
+    loaded++;
+    if(loaded === total){
+      console.log("All images loaded!");
+      imagesReady = true;
+    }
+  }
+  
   ranks.forEach(r=>{
     suits.forEach(s=>{
       let img = new Image();
+      img.onload = checkReady;
+      img.onerror = () => { console.error(`Failed to load ${r}${s}`); checkReady(); };
       img.src = `cards/${suitAbbrev[s]}${rankNums[r]}.png`;
       cardImages[r+s] = img;
     });
   });
   back = new Image();
+  back.onload = checkReady;
+  back.onerror = () => { console.error("Failed to load card back"); checkReady(); };
   back.src = "cards/Card-Back-01.png";
   console.log("Card images loading initiated");
 }
@@ -215,8 +231,10 @@ function getCardOffset(card, index){
 }
 
 function drawPile(){
+  if(!imagesReady) return;
   let visible = pile.slice(-6);
   visible.forEach((card, i)=>{
+    if(!cardImages[card]) return;
     let offset = getCardOffset(card, pile.length - i);
     ctx.save();
     ctx.translate(500 + offset.offsetX, 300 - i*2 + offset.offsetY);
@@ -227,7 +245,8 @@ function drawPile(){
 }
 
 function drawAnimatedCard(){
-  if(!cardAnimation) return;
+  if(!cardAnimation || !imagesReady) return;
+  if(!cardImages[cardAnimation.card]) return;
   let progress = cardAnimation.progress / cardAnimation.duration;
   let sx = cardAnimation.player === 0 ? 200 : 800;
   let sy = cardAnimation.player === 0 ? 572 : 122;
@@ -237,7 +256,7 @@ function drawAnimatedCard(){
 }
 
 function drawBurnAnimation(){
-  if(!burnAnimation) return;
+  if(!burnAnimation || !imagesReady || !back) return;
   let progress = burnAnimation.progress / burnAnimation.duration;
   let scale = 1 - progress * 0.5;
   if(scale > 0){
@@ -248,11 +267,12 @@ function drawBurnAnimation(){
 }
 
 function drawCollectionAnimation(){
-  if(!collectionAnimation) return;
+  if(!collectionAnimation || !imagesReady) return;
   let progress = collectionAnimation.progress / collectionAnimation.duration;
   let endX = collectionAnimation.player === 0 ? 200 : 800;
   let endY = collectionAnimation.player === 0 ? 572 : 122;
   pile.slice(-5).forEach((card, i)=>{
+    if(!cardImages[card]) return;
     let p = Math.min(1, progress + (i * 0.1));
     let x = 500 + (endX - 500) * p;
     let y = 300 + (endY - 300) * p;
@@ -263,6 +283,13 @@ function drawCollectionAnimation(){
 function draw(){
   ctx.fillStyle = "#1e7a3f";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  if(!imagesReady){
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Loading card images...", 350, 350);
+    return;
+  }
   
   ctx.drawImage(back, 150, 500, CARD_W, CARD_H);
   ctx.drawImage(back, 750, 50, CARD_W, CARD_H);
