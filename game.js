@@ -185,7 +185,7 @@ function playCard(player){
   if(cards.length === 0) return;
   
   let card = cards.shift();
-  cardAnimation = { card, player, progress: 0, duration: 150 };
+  cardAnimation = { card, player, progress: 0, duration: 50 };
 }
 
 function slap(player){
@@ -252,23 +252,24 @@ document.addEventListener("keydown", e=>{
 function getCardOffset(card, index){
   let seed = 0;
   for(let i=0; i<card.length; i++) seed += card.charCodeAt(i);
-  seed = (seed * 7 + index * 13) % 200;
+  seed = (seed * 7 + index * 13) % 300;
   
   return {
-    offsetX: (seed % 15) - 7,
-    offsetY: ((seed * 11) % 10) - 5,
-    rot: ((seed * 23) % 40 - 20) * (Math.PI/180)
+    offsetX: (seed % 40) - 20,
+    offsetY: ((seed * 11) % 30) - 15,
+    rot: ((seed * 23) % 90 - 45) * (Math.PI/180)
   };
 }
 
 function drawPile(){
   if(!imagesReady) return;
-  let visible = pile.slice(-6);
+  let visible = pile.slice(-8);
   visible.forEach((card, i)=>{
     if(!cardImages[card]) return;
-    let offset = getCardOffset(card, i);
+    let fullIndex = pile.length - visible.length + i;
+    let offset = getCardOffset(card, fullIndex);
     ctx.save();
-    ctx.translate(500 + offset.offsetX, 300 - i*2 + offset.offsetY);
+    ctx.translate(500 + offset.offsetX, 300 - fullIndex * 4 + offset.offsetY);
     ctx.rotate(offset.rot);
     ctx.drawImage(cardImages[card], -CARD_W/2, -CARD_H/2, CARD_W, CARD_H);
     ctx.restore();
