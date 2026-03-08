@@ -1,10 +1,26 @@
-console.log("Script loading...");
+console.log("=== SCRIPT STARTING ===");
+console.log("Script loading at", new Date().toLocaleTimeString());
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-console.log("Canvas found:", !!canvas);
-console.log("Context found:", !!ctx);
+console.log("✓ Canvas:", canvas ? "FOUND" : "NOT FOUND");
+console.log("✓ Context:", ctx ? "FOUND" : "NOT FOUND");
+
+if(!canvas) {
+  console.error("CRITICAL: Canvas element not found!");
+  throw new Error("Canvas not found");
+}
+
+if(!ctx) {
+  console.error("CRITICAL: 2D context not found!");
+  throw new Error("Context not found");
+}
+
+// Test canvas immediately
+ctx.fillStyle = "white";
+ctx.fillText("Script initialized!", 10, 30);
+console.log("✓ Wrote test text to canvas");
 
 const CARD_W = 100;
 const CARD_H = 145;
@@ -401,5 +417,15 @@ function loop(time){
 console.log("Initializing game...");
 loadImages();
 console.log("Starting animation loop...");
-requestAnimationFrame(loop);
+
+let firstFrame = true;
+const originalRequestAnimationFrame = requestAnimationFrame;
+requestAnimationFrame(function firstFrameCallback(time) {
+  if(firstFrame) {
+    console.log("✓ First frame called at", time);
+    firstFrame = false;
+  }
+  loop(time);
+});
+
 console.log("Game started!");
